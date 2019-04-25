@@ -9,20 +9,26 @@
 namespace HeimrichHannot\UtilsBundle\Location;
 
 use Contao\Config;
-use Contao\CoreBundle\Framework\ContaoFrameworkInterface;
-use Contao\System;
+use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\DataContainer;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class LocationUtil
 {
     const GOOGLE_MAPS_GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false';
     /**
-     * @var ContaoFrameworkInterface
+     * @var ContaoFramework
      */
     protected $framework;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
 
-    public function __construct(ContaoFrameworkInterface $framework)
+    public function __construct(ContainerInterface $container)
     {
-        $this->framework = $framework;
+        $this->framework = $container->get('contao.framework');
+        $this->container = $container;
     }
 
     /**
@@ -72,14 +78,14 @@ class LocationUtil
      */
     public function computeCoordinatesByString(string $address, string $apiKey = '')
     {
-        $curlUtil = System::getContainer()->get('huh.utils.request.curl');
+        $curlUtil = $this->container->get('huh.utils.request.curl');
 
-        $url = sprintf(static::GOOGLE_MAPS_GEOCODE_URL, urlencode($address));
+        $url = sprintf(static::GOOGLE_MAPS_GEOCODE_URL, urlencode(trim($address)));
 
         if ($apiKey) {
-            $url = System::getContainer()->get('huh.utils.url')->addQueryString('key='.$apiKey, $url);
+            $url = $this->container->get('huh.utils.url')->addQueryString('key='.$apiKey, $url);
         } elseif (Config::get('utilsGoogleApiKey')) {
-            $url = System::getContainer()->get('huh.utils.url')->addQueryString('key='.Config::get('utilsGoogleApiKey'), $url);
+            $url = $this->container->get('huh.utils.url')->addQueryString('key='.Config::get('utilsGoogleApiKey'), $url);
         }
 
         $result = $curlUtil->request($url);
@@ -90,8 +96,8 @@ class LocationUtil
 
         $response = json_decode($result);
 
-        if ($response->error_message) {
-            $session = System::getContainer()->get('contao.session.contao_backend');
+        if (isset($response->error_message)) {
+            $session = $this->container->get('contao.session.contao_backend');
 
             $session->set('utils.location.error', $response->error_message);
 
@@ -101,7 +107,7 @@ class LocationUtil
         return ['lat' => $response->results[0]->geometry->location->lat, 'lng' => $response->results[0]->geometry->location->lng];
     }
 
-    public function computeCoordinatesInSaveCallback($value, \Contao\DataContainer $dc)
+    public function computeCoordinatesInSaveCallback($value, DataContainer $dc)
     {
         $data = [
             'street' => $dc->activeRecord->street,
@@ -113,14 +119,14 @@ class LocationUtil
             return $value;
         }
 
-        $result = System::getContainer()->get('huh.utils.location')->computeCoordinatesByArray([
+        $result = $this->computeCoordinatesByArray([
             'street' => $dc->activeRecord->street,
             'postal' => $dc->activeRecord->postal,
             'city' => $dc->activeRecord->city,
         ]);
 
         if (false === $result || !\is_array($result)) {
-            $session = System::getContainer()->get('contao.session.contao_backend');
+            $session = $this->container->get('contao.session.contao_backend');
 
             if ($error = $session->get('utils.location.error')) {
                 throw new \Exception($session->get('utils.location.error'));
