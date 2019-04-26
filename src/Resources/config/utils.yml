@@ -43,6 +43,10 @@ services:
     class: HeimrichHannot\UtilsBundle\Image\ImageUtil
   HeimrichHannot\UtilsBundle\Image\ImageUtil: "@huh.utils.image"
 
+  huh.utils.location:
+    class: HeimrichHannot\UtilsBundle\Location\LocationUtil
+  HeimrichHannot\UtilsBundle\Location\LocationUtil: "@huh.utils.location"
+
   huh.utils.model:
     class: HeimrichHannot\UtilsBundle\Model\ModelUtil
   HeimrichHannot\UtilsBundle\Model\ModelUtil: '@huh.utils.model'

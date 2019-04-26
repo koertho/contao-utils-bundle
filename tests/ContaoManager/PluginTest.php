@@ -24,6 +24,7 @@ use HeimrichHannot\UtilsBundle\Dca\DcaUtil;
 use HeimrichHannot\UtilsBundle\File\FileUtil;
 use HeimrichHannot\UtilsBundle\HeimrichHannotContaoUtilsBundle;
 use HeimrichHannot\UtilsBundle\Image\ImageUtil;
+use HeimrichHannot\UtilsBundle\Location\LocationUtil;
 use HeimrichHannot\UtilsBundle\Model\ModelUtil;
 use HeimrichHannot\UtilsBundle\Template\TemplateUtil;
 use Symfony\Component\Config\Loader\DelegatingLoader;
@@ -131,6 +132,11 @@ class PluginTest extends ContaoTestCase
             [
                 'alias' => 'huh.utils.image',
                 'class' => ImageUtil::class,
+                'parameters' => 1,
+            ],
+            [
+                'alias' => 'huh.utils.location',
+                'class' => LocationUtil::class,
                 'parameters' => 1,
             ],
             [
